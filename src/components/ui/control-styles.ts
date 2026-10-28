@@ -1,0 +1,3 @@
+export const focusRing = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8798ff] focus-visible:ring-offset-4 focus-visible:ring-offset-[#111216]";
+export const iconButton = `inline-flex size-11 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.035] text-[#c5c7d1] transition-colors hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 ${focusRing}`;
+export const primaryButton = `inline-flex min-h-14 w-full items-center justify-center gap-2.5 rounded-full bg-[#e7eaff] px-5 text-[16px] font-extrabold text-[#181c33] transition-colors hover:bg-white disabled:cursor-not-allowed disabled:bg-white/[0.055] disabled:text-[#9a9ba9] ${focusRing}`;

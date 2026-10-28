@@ -1,0 +1,30 @@
+node_modules/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+.env*
+!.env.example
+.DS_Store
+private-notes/
+marketing/
+
+# Self-host Satoshi locally; each checkout downloads its own Fontshare copy.
+src/app/fonts/*.woff2
+src/app/fonts/*-LICENSE.txt
+
+# Persistent private wallet and downloaded upstream/build state
+.local/
+contracts/node_modules/
+contracts/artifacts/
+contracts/cache/
+contracts/types/
+contracts/fhevmTemp/
+contracts/deployments/
+contracts/.env*
+!contracts/.env.example
+
+# Guard against accidentally using an un-dotted local signer file.
+contracts/env
+services/zcash/native/target/
+experiments/private-collateral/native/target/

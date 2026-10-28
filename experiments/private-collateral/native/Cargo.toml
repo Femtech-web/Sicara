@@ -1,0 +1,47 @@
+[package]
+name = "sicara-private-collateral-probe"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.89"
+publish = false
+
+[dependencies]
+anyhow = "=1.0.104"
+ff = "=0.14.0"
+pasta_curves = "=0.6.1"
+orchard = { version = "=0.16.0", default-features = false, features = ["std", "circuit", "unstable-voting-circuits"] }
+rand = { version = "=0.10.2", default-features = false, features = ["std", "sys_rng"] }
+rand_core06 = { package = "rand_core", version = "=0.6.4", features = ["getrandom"] }
+reddsa_frost = { package = "reddsa", version = "=0.5.2", default-features = false, features = ["std", "frost"] }
+frost-rerandomized = { version = "=3.0.0", default-features = false, features = ["serialization"] }
+zcash_note_encryption = "=0.5.1"
+serde_json = "=1.0.151"
+blake2b_simd = "=1.0.4"
+halo2_proofs = "=0.4.0"
+halo2_gadgets = "=0.6.0"
+rand_core = "=0.10.1"
+bellman = "=0.15.0"
+groth16 = "=0.2.0"
+bls12_381 = "=0.9.0"
+sha2 = "=0.11.1"
+serde = { version = "=1.0.229", features = ["derive"] }
+hex = "=0.4.3"
+group = "=0.14.0"
+zcash_client_backend = { version = "=0.25.0", default-features = false, features = ["orchard", "lightwalletd-tonic-transport", "lightwalletd-tonic-tls-webpki-roots"], optional = true }
+tokio = { version = "=1.53.1", features = ["rt", "time"], optional = true }
+tonic = { version = "0.14", features = ["transport", "tls-webpki-roots", "tls-ring"], optional = true }
+
+pczt = { version = "=0.10.0", features = ["orchard", "transparent", "prover", "signer", "io-finalizer", "spend-finalizer", "tx-extractor", "zcp-builder"], optional = true }
+zcash_primitives = { version = "=0.31.0", features = ["transparent-inputs", "non-standard-fees"], optional = true }
+zcash_transparent = { version = "=0.11.0", features = ["transparent-inputs"], optional = true }
+zcash_protocol = { version = "=0.11.0", optional = true }
+secp256k1 = { version = "=0.33.1", optional = true }
+incrementalmerkletree = { version = "=0.9.0", optional = true }
+sapling = { package = "sapling-crypto", version = "=0.9.0", optional = true }
+zcash_keys = { version = "=0.17.0", default-features = false, features = ["orchard"], optional = true }
+zcash_address = { version = "=0.14.0", optional = true }
+
+[features]
+chain-observer = ["dep:zcash_client_backend", "dep:tokio", "dep:tonic"]
+lock-kit = ["dep:pczt", "dep:zcash_primitives", "dep:zcash_transparent", "dep:zcash_protocol", "dep:secp256k1", "dep:incrementalmerkletree", "dep:sapling"]
+live-runner = ["chain-observer", "lock-kit", "dep:zcash_keys", "dep:zcash_address"]

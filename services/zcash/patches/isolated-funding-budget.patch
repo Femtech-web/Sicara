@@ -1,0 +1,39 @@
+--- a/src/wallet.rs
++++ b/src/wallet.rs
+@@ -1321,6 +1321,11 @@
+         let proposal = self.propose(request)?;
+         let step = proposal.steps().first();
+         let fee = step.balance().fee_required();
++        // Sicara isolated TEST funding only: enforce the owner's total debit cap
++        // after coin selection and BEFORE deriving a spending key or signing.
++        if !isolated_funding_debit_allowed(self.params, fee.into_u64(), &outputs) {
++            return Err(WalletError::BadRequest("isolated funding is testnet-only and amount plus fee must not exceed 0.01 TAZ".into()));
++        }
+         let propose_ms = t0.elapsed().as_millis();
+ 
+         let t1 = Instant::now();
+@@ -1588,3 +1593,24 @@
+         .map(|b| b.actions().len())
+         .ok_or_else(|| WalletError::Privacy("built transaction has no Ironwood bundle; not broadcasting".into()))
+ }
++
++// Dedicated isolated-funder patch. Ordinary custody binary is unchanged.
++fn isolated_funding_debit_allowed(network: zcash_protocol::consensus::Network, fee: u64, outputs: &[OutputReq]) -> bool {
++    matches!(network, zcash_protocol::consensus::Network::TestNetwork)
++        && outputs.iter().try_fold(fee, |sum, output| sum.checked_add(output.zats)).is_some_and(|total| total <= 1_000_000)
++}
++#[cfg(test)]
++mod sicara_budget_tests {
++    use super::*;
++    #[test]
++    fn total_debit_includes_fee_and_rejects_mainnet_and_overflow() {
++        use zcash_protocol::consensus::Network::{TestNetwork, MainNetwork};
++        let out = |zats| OutputReq { to: String::new(), zats, memo: vec![] };
++        assert!(isolated_funding_debit_allowed(TestNetwork, 10_000, &[out(900_000)]));
++        assert!(isolated_funding_debit_allowed(TestNetwork, 100_000, &[out(900_000)]));
++        assert!(!isolated_funding_debit_allowed(TestNetwork, 100_001, &[out(900_000)]));
++        assert!(!isolated_funding_debit_allowed(MainNetwork, 10_000, &[out(900_000)]));
++        assert!(!isolated_funding_debit_allowed(TestNetwork, 1, &[out(u64::MAX)]));
++        assert!(!isolated_funding_debit_allowed(TestNetwork, 10_000, &[out(500_000),out(500_000)]));
++    }
++}
