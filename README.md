@@ -8,15 +8,13 @@ Sicara is a lending prototype built for ZECATHON. Borrowers lock shielded ZEC to
 
 The original internal, operator-custodied loan completed a real testnet deposit → borrow → repay → shielded return. A separate cUSDC lender market now supports verified live supply and withdrawal. The newer client-held private collateral flow is still being integrated: **public ZEC deposits remain disabled**.
 
-[How it works](#the-lending-flow) · [Architecture](#architecture) · [Run locally](#run-locally) · [Verification](#verification) · [Privacy and limits](#privacy-and-trust-boundaries)
+[Live app](https://sicara.femdev.site/) · [Watch the demo](https://youtu.be/1XB7PXnJhFU) · [How it works](#the-lending-flow) · [Architecture](#architecture) · [Run locally](#run-locally) · [Verification](#verification) · [Privacy and limits](#privacy-and-trust-boundaries)
 
 ## Start here
 
 - **Explore the product:** run the app, open `/docs`, and visit **Borrow**, **Lend** and **Positions**. The guide explains both sides of a loan in simple terms.
 - **Try the lender path:** connect a Sepolia browser wallet, get test assets from **Faucets**, then supply cUSDC. In **Positions → Supplied**, authorize private viewing or withdraw an unmatched offer.
 - **Review the evidence:** the table below separates live results from local tests and unfinished integrations. A transaction receipt proves its own step, not the entire privacy design.
-
-No public deployment URL is supplied in this checkout. The local app runs at `http://127.0.0.1:3000`.
 
 ## What works today
 
@@ -165,77 +163,11 @@ pnpm fonts
 pnpm dev
 ```
 
-Open `http://127.0.0.1:3000`; the guide is at `/docs`. The preview and wallet connection do not need database credentials. Use a Sepolia browser wallet such as MetaMask or Rabby. Zcash payments use a separate testnet wallet; a payment QR is a send request, not a wallet login. NEAR connection is not required for the current pilot.
+Open `http://127.0.0.1:3000`; the guide is at `/docs`. The preview and wallet connection do not need database credentials. Connect opens separate Sepolia and Zcash sections. Use MetaMask or Rabby for Sepolia; the Zcash connector supports a compatible testnet Noir extension through its documented injected RPC. It requests account authorization only, keeps the returned address in tab memory, rejects damaged/mainnet Unified Addresses and clears connection state on chain changes. It does not read balances, send payments, prove ownership or establish a loan lock. A payment QR is a separate send request. NEAR connection is not required for the current pilot.
 
-`pnpm fonts` installs the self-hosted Satoshi font and its license from Fontshare. Stop the development server with Ctrl-C when finished.
+`pnpm fonts` installs the self-hosted Satoshi font and its license from Fontshare.
 
-### Database and sign-in
-
-Copy `.env.example` into a local `.env.local` **only if that file does not already exist**, then configure:
-
-| Variable | Purpose |
-| --- | --- |
-| `DATABASE_URL` | Supabase PostgreSQL transaction pooler for app requests. |
-| `DATABASE_MIGRATION_URL` | Direct or session connection for migrations. |
-| `DATABASE_WORKER_URL` | Dedicated session connection for the persistent worker; transaction pooling is unsuitable for its lock. |
-| `DATABASE_SSL_CA_FILE` | Optional CA path for verified TLS; `.local/supabase-ca.crt` is used when present. |
-| `SICARA_APP_ORIGIN` | Exact browser origin; local default is `http://127.0.0.1:3000`. |
-
-Use the PostgreSQL connection strings from Supabase's **Connect** panel, with an encoded password and verified TLS. No browser Supabase API key is required. See [Supabase connection options](https://supabase.com/docs/guides/database/connecting-to-postgres).
-
-```sh
-pnpm db:migrate
-```
-
-The runner applies pending migrations transactionally. Then connect a Sepolia wallet, open **Positions → Borrowed**, and explicitly sign in to read that wallet's loan requests. Connecting alone does not request a signature. The first sign-in implementation supports EOAs, not contract-wallet signatures.
-
-### Contracts and native services
-
-The Hardhat package is separate from the app. Use Node 22 for these commands:
-
-```sh
-pnpm --dir contracts install
-pnpm --dir contracts compile
-pnpm --dir contracts typecheck
-pnpm --dir contracts test
-```
-
-Live contract tools use `contracts/.env`, following `contracts/.env.example`: `SEPOLIA_RPC_URL` and a dedicated test-only `SEPOLIA_PRIVATE_KEY`. Keep keys out of source control and chat. Deployment and live scripts send transactions; they are not part of the default local setup.
-
-The original custodial worker is also separate from Next.js:
-
-```sh
-pnpm zcash:prepare
-pnpm zcash:validator
-pnpm worker --once
-```
-
-Configure the protected wallet paths from `.env.example` on the custody host first. `--once` performs one reconciliation pass and closes resources; it can process existing authorized work. Preserve the wallet, database and write-ahead journals together. Never reset wallet state to resolve a sync error, expose the wallet process publicly, or enable public intake by bypassing the privacy gates.
-
-## Deploy the app on Vercel
-
-You can deploy the web app now while public ZEC deposits stay gated. Supabase hosts the database. The persistent Zcash wallet, worker and signing services require a separate persistent host; they are not deployed by Vercel. Existing Sepolia contracts do not need redeploying for a website deployment.
-
-1. Commit and push the latest app changes to your existing repository. The repository may remain private; grant the Vercel GitHub integration access to it.
-2. In Vercel, choose **Add New → Project**, import that repository and select **Next.js**. Use the directory containing this `package.json` as the root, normally `./` for a Sicara-only repository.
-3. Use Node **22.x**. The included `vercel.json` installs with `pnpm install --frozen-lockfile` and builds with `pnpm fonts && pnpm build`; leave the output directory at the Next.js default. Font downloading is required because font binaries are not committed.
-4. Add the production environment values below. Do not upload the whole local environment file.
-5. Deploy. If the final domain was not known beforehand, set `SICARA_APP_ORIGIN` to the resulting stable production URL, then redeploy. Environment changes apply to new deployments.
-6. Open `/` and `/docs`, connect on Sepolia, then verify sign-in in **Positions → Borrowed**. Check the cUSDC faucet, supply and unmatched withdrawal using small test amounts. A successful build alone does not verify browser encryption or wallet prompts.
-
-| Vercel environment variable | Value |
-| --- | --- |
-| `DATABASE_URL` | Your existing Supabase app transaction-pooler connection string, normally port 6543. Keep the password private, URL-encode it, retain verified TLS and remove any Mac-only `sslrootcert` path. |
-| `SICARA_APP_ORIGIN` | Exact production origin, such as `https://your-actual-project.vercel.app`, with no trailing slash. It must match the domain opened in the browser. |
-| `DATABASE_SSL_CA` | If the database needs the Supabase CA, paste its complete **public** PEM certificate, including BEGIN/END lines. Actual newlines or literal `\n` escapes work. Obtain it from the project's database SSL settings; the current local copy is `.local/supabase-ca.crt`. |
-
-Keep `DATABASE_MIGRATION_URL`, `DATABASE_WORKER_URL`, `DATABASE_SSL_CA_FILE`, wallet paths, seeds, key shares and `SEPOLIA_PRIVATE_KEY` off Vercel. They belong on the appropriate local/admin/worker host. Run `pnpm db:migrate` locally against the hosted database when needed; do not run migrations during every Vercel build. There are no required `NEXT_PUBLIC_*` secrets or Supabase anon/service-role keys for this app.
-
-Production and Preview are separate environments. Use the stable production domain for submission and wallet sign-in; a preview URL will not match a production-only origin setting. If Vercel enables deployment protection, make sure judges can access the submitted production URL without signing into your Vercel account.
-
-SEO uses the configured production origin for canonical URLs, Open Graph/Twitter previews, `/robots.txt` and `/sitemap.xml`. Only the public home and guide pages enter the sitemap; API routes are excluded. HTTPS production deployments can be indexed; local and Vercel preview builds remain noindex. The branded social card is rendered locally as a PNG, and the home page includes SoftwareApplication structured data without invented ratings or endorsements.
-
-References: [Vercel Git imports](https://vercel.com/docs/git), [Node versions](https://vercel.com/docs/functions/runtimes/node-js/node-js-versions), [environment variables](https://vercel.com/docs/environment-variables), [function runtime limits](https://vercel.com/docs/functions/runtimes).
+For authenticated loan records, configure the server-side database variables in `.env.example`, then run `pnpm db:migrate`. Contract dependencies are installed separately with `pnpm --dir contracts install`. Keep credentials and wallet material out of source control.
 
 ## Test assets and deployed contracts
 
@@ -271,7 +203,7 @@ pnpm --dir contracts typecheck
 pnpm --dir contracts test
 ```
 
-Latest local checks: **54 app tests pass**; **28 contract tests pass** in the default run, with one native binding integration skipped unless its local binary is configured. Running that integration separately with the native binary passes both binding tests. Root and contract typechecks pass. The app production build passes, with a webpack chunk-cycle warning from the confidential-token SDK integration. Browser interaction verification remains pending.
+Latest local checks: **57 app tests pass**; **28 contract tests pass** in the default run, with one native binding integration skipped unless its local binary is configured. Running that integration separately with the native binary passes both binding tests. Root and contract typechecks pass. The app production build passes, with a webpack chunk-cycle warning from the confidential-token SDK integration. Browser interaction verification remains pending.
 
 App tests cover exact amount math, authenticated reads, real PostgreSQL migrations, ownership, confirmations, reservations, refunds, restarts and release coordination. Contract tests cover encrypted transfers, access controls, replay protection, repayment, settlement, lender fund isolation and required interest. Native proof tests over synthetic roots are not live collateral evidence.
 
@@ -284,7 +216,7 @@ src/features/lending/       Borrowing UI, terms, positions and loan records
 src/features/liquidity/     Lender supply, private position viewing and withdrawal
 src/features/privacy/       Browser-side confidential input and viewing helpers
 src/features/wallet/        Sepolia connection and server-side sign-in
-src/features/zcash/         Local payment QR and ZIP 321 request helpers
+src/features/zcash/         Zcash connection, local QR and payment requests
 src/features/test-funds/    Ecosystem and confidential-token faucet UI
 services/database/          PostgreSQL adapters and versioned migrations
 services/zcash/             Native validator, sidecar adapter, journals and worker
@@ -292,17 +224,13 @@ contracts/                  Confidential tokens, lending contracts and tests
 tests/                      App, database and worker checks
 ```
 
-Routes compose features; feature modules own their domain logic. Shared UI stays separate from loan and wallet rules. Styling uses Tailwind, Satoshi and Phosphor filled icons. GSAP handles a small entrance animation with reduced-motion support. The film project, private product notes, local privacy experiments, keys and generated evidence are excluded by `.gitignore`; experimental script entries require the owner's local research files.
+Routes compose features; feature modules own their domain logic. Shared UI stays separate from loan and wallet rules. Styling uses Tailwind, Satoshi and Phosphor filled icons. GSAP handles a small entrance animation with reduced-motion support.
 
-## Remaining core work
+## Roadmap
 
-1. Connect real per-loan client, co-signer and lender signing sessions to durable policy checks.
-2. Complete the funded repayment/release, default and recovery scenarios using confirmed Zcash state.
-3. Satisfy independent chain-state verification for public use and validate the deadline/recovery behavior.
-4. Connect the private borrower lifecycle to the UI, verify browser interactions and demonstrate live matched lender interest delivery.
-5. Enable public testnet ZEC deposits only after those gates pass.
+Complete and verify the client-held collateral flow, funded release/default/recovery and live matched-loan interest delivery before opening public ZEC deposits. Borrower-to-deposit unlinkability remains separate privacy work.
 
-NEAR Intents routing and verified-vault reinvestment follow the core flow. Lender interest is required core functionality, not an optional extension.
+NEAR Intents routing and lender-earnings reinvestment are later extensions. Borrowers’ locked ZEC stays separate from yield strategies.
 
 ## Built with and acknowledgments
 
@@ -310,6 +238,7 @@ NEAR Intents routing and verified-vault reinvestment follow the core flow. Lende
 - **Zama:** [FHEVM tooling](https://github.com/zama-ai/fhevm-hardhat-template), the Relayer SDK and OpenZeppelin confidential contracts support encrypted token operations. The pinned SDK version matches the tested contract toolchain; revalidate compatibility before upgrading.
 - **Silicr:** [upstream project](https://github.com/mrnetwork0001/Silicr), pinned at `0767b30f645be6e7083c1f4e3cb01c19728f1ef9`, provides the prepared wallet sidecar and informed the local ZIP 321 payment flow. The isolated funding build applies Sicara's testnet budget patch. Preserve upstream license and attribution notices.
 - **NEAR:** [NEAR Intents](https://docs.near-intents.org/) is the planned optional routing layer; it does not verify collateral or replace Zcash privacy.
+- **Noir Wallet:** [injected provider reference](https://github.com/NoirWallet/zcash-wallet-adapter) informed the testnet account connector. Wallet connection does not establish Sicara’s private collateral lock.
 - **Interface:** Next.js, React, Tailwind, wagmi, viem, Satoshi and Phosphor. Superbridge informed the visual direction; Sicara's layout is designed for lending.
 
 Sicara is an independent prototype. Its test tokens are not endorsed by Circle or Zama. Third-party components retain their own licenses; this checkout does not declare a project-wide open-source license.
