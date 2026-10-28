@@ -18,7 +18,7 @@ export async function decryptValues(wallet:WalletClient,contract:Address,handles
  const sdk=await fheClient(),keys=sdk.generateKeypair();
  const start=Math.floor(Date.now()/1000)-30;const addresses=[contract];
  const data=sdk.createEIP712(keys.publicKey,addresses,start,1);
- const signature=await wallet.signTypedData({account,domain:{...data.domain,verifyingContract:data.domain.verifyingContract as Address},types:data.types,primaryType:data.primaryType,message:data.message});
+ const signature=await wallet.signTypedData({account,domain:{...data.domain,verifyingContract:data.domain.verifyingContract as Address},types:data.types,primaryType:data.primaryType,message:{...data.message,startTimestamp:BigInt(data.message.startTimestamp),durationDays:BigInt(data.message.durationDays)}});
  const result=await sdk.userDecrypt(handles.map(handle=>({handle,contractAddress:contract})),keys.privateKey,keys.publicKey,signature.replace(/^0x/,''),addresses,account.address,start,1);
  return handles.map(h=>{const value=result[h];if(typeof value!=='bigint'&&typeof value!=='number')throw new Error('Private amount is not ready. Refresh and retry viewing.');return BigInt(value);});
 }

@@ -20,8 +20,8 @@ export function MyLoans({ onBorrow }: { onBorrow: () => void }) {
   });
   const error = signIn.error || signOut.error || (authenticated ? loans.error : query.error);
   return (
-    <div className="flex min-h-[450px] flex-col items-center justify-center rounded-[25px] bg-[#111215] px-7 py-10 text-center">
-      <span className="mb-6 flex size-[72px] items-center justify-center rounded-[25px] border border-[#8c9bff]/15 bg-[#8c9bff]/5 text-[#b1bef4]"><Landmark size={29} /></span>
+    <div className="flex min-h-[260px] flex-col items-center justify-center rounded-[25px] bg-[#111215] px-5 py-6 text-center">
+      <span className="mb-4 flex size-[52px] items-center justify-center rounded-[18px] border border-[#8c9bff]/15 bg-[#8c9bff]/5 text-[#b1bef4]"><Landmark size={29} /></span>
       <h2 className="text-xl font-extrabold tracking-tight">{authenticated ? "Your loans" : isConnected ? "A private place for your loans" : "Your ZEC. Your next move."}</h2>
       <p className="mt-3 max-w-[300px] text-sm leading-relaxed text-[#979eaf]">{authenticated ? "Your requests appear here as their status is confirmed." : isConnected ? "Sign a message to prove this wallet is yours and view your loan requests. Signing in is free and does not move funds." : "Connect your wallet, then sign in to manage your loans."}</p>
       <p className="mb-6 mt-4 rounded-full border border-white/8 px-3 py-1.5 text-[11px] font-bold text-[#9ea7c3]">Deposits and borrowing are not enabled yet</p>

@@ -7,7 +7,7 @@ import { focusRing } from "@/components/ui/control-styles";
 import { assets, type Asset } from "../model/assets";
 import { TokenIcon } from "./token-icon";
 
-export function AssetSelector({ asset, role, onSelect }: { asset: Asset; role: "collateral" | "borrow"; onSelect?: (asset: Asset) => void }) {
+export function AssetSelector({ asset, role, onSelect }: { asset: Asset; role: "collateral" | "borrow" | "lend"; onSelect?: (asset: Asset) => void }) {
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -16,7 +16,7 @@ export function AssetSelector({ asset, role, onSelect }: { asset: Asset; role: "
         <span className="text-sm font-bold text-[#e6e9f2] sm:text-base">{asset.symbol}</span>
         <ChevronDown size={13} className="ml-0.5 text-[#8f95a7]" />
       </button>
-      <Dialog open={open} onOpenChange={setOpen} title={role === "collateral" ? "Choose collateral" : "Choose what to borrow"} description="Shielded ZEC collateral with confidential borrowing on Sepolia.">
+      <Dialog open={open} onOpenChange={setOpen} title={role === "collateral" ? "Choose collateral" : role === "lend" ? "Choose what to lend" : "Choose what to borrow"} description="Shielded ZEC collateral with confidential borrowing on Sepolia.">
         <div className="space-y-2">
           {Object.values(assets).filter(option => role === 'collateral' ? option.id === 'zec' || option.id === 'near' : option.id === 'cusdc' || option.id === 'demo-zama').map((option) => {
             const selected = option.id === asset.id;

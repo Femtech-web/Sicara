@@ -12,10 +12,15 @@ export function connectionOptions(connectionString: string) {
   const fallback = resolve(".local/supabase-ca.crt");
   const isSupabase = url.hostname.endsWith('.supabase.com') || url.hostname.endsWith('.supabase.co');
   const certificate = url.searchParams.get('sslrootcert') || process.env.DATABASE_SSL_CA_FILE || (isSupabase && existsSync(fallback) ? fallback : undefined);
+  // Serverless hosts do not have this Mac's private .local certificate path.
+  // Accept the public CA certificate directly as a server-only PEM environment
+  // variable. Explicit file configuration still takes precedence and fails if absent.
+  const certificatePem = process.env.DATABASE_SSL_CA?.replace(/\\n/g, '\n').trim();
+  if (certificatePem && (!certificatePem.startsWith('-----BEGIN CERTIFICATE-----') || !certificatePem.endsWith('-----END CERTIFICATE-----') || certificatePem.includes('PRIVATE KEY'))) throw new Error('DATABASE_SSL_CA must contain a public PEM certificate');
   // pg otherwise lets URL SSL options overwrite the explicitly verified SSL object.
   for (const key of ['ssl', 'sslmode', 'sslrootcert', 'uselibpqcompat']) url.searchParams.delete(key);
   return {
     connectionString: url.toString(),
-    ssl: { rejectUnauthorized: true, ...(certificate ? { ca: readFileSync(resolve(certificate), 'utf8') } : {}) },
+    ssl: { rejectUnauthorized: true, ...(certificate ? { ca: readFileSync(resolve(certificate), 'utf8') } : certificatePem ? { ca: certificatePem } : {}) },
   };
 }

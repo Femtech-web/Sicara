@@ -4,7 +4,7 @@ import { SiteHeader } from "./site-header";
 export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="relative isolate flex min-h-dvh flex-col overflow-x-clip bg-[#0b0b10]">
-      <a href="#main-content" className="absolute left-4 top-4 z-50 -translate-y-24 rounded-full bg-[#e7eaff] px-5 py-3 font-bold text-[#181c33] focus:translate-y-0">Skip to lending</a>
+      <a href="#main-content" className="absolute left-4 top-4 z-50 -translate-y-24 rounded-full bg-[#e7eaff] px-5 py-3 font-bold text-[#181c33] focus:translate-y-0">Skip to content</a>
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute right-0 -top-[630px] h-[1250px] w-[1450px] translate-x-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,#2f48b8_0%,#202d6b66_30%,transparent_65%)] opacity-90" />
         <div className="absolute -bottom-[620px] -left-[700px] h-[1300px] w-[1700px] rounded-full bg-[radial-gradient(ellipse_at_center,#3451c88c_0%,#26396e66_30%,transparent_68%)]" />

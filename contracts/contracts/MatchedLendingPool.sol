@@ -12,6 +12,7 @@ contract MatchedLendingPool is TimedCommonCeilingLoanProbe {
     mapping(bytes32 => bytes32) public offerForLoan;
     mapping(bytes32 => euint64) private principalOutstanding;
     uint16 public immutable interestBps;
+    uint64 public immutable maximumPrincipal;
     error InvalidPosition(); error NotLender(); error PositionLocked(); error MatchRequired();
     event Supplied(bytes32 indexed offerId, address indexed lender);
     event Matched(bytes32 indexed offerId, bytes32 indexed loanId);
@@ -21,6 +22,7 @@ contract MatchedLendingPool is TimedCommonCeilingLoanProbe {
         require(block.chainid == 31337 || block.chainid == 11155111, InvalidPosition());
         require(interestBps_ > 0 && interestBps_ <= 10_000 && commonCeiling > 0 && commonCeiling <= type(uint64).max / 2, InvalidPosition());
         interestBps = interestBps_;
+        maximumPrincipal = uint64(uint256(commonCeiling) * 10_000 / (10_000 + uint256(interestBps_)));
     }
     /// Grant short-lived token operator permission first. Over-cap requests move
     /// encrypted zero; balance accounting always uses the ACTUAL transfer.
@@ -47,9 +49,15 @@ contract MatchedLendingPool is TimedCommonCeilingLoanProbe {
         FHE.allowThis(principalOutstanding[a.loanId]); emit Matched(offerId, a.loanId);
     }
     function withdraw(bytes32 offerId, externalEuint64 input, bytes calldata proof) external {
+        _withdraw(offerId, FHE.fromExternal(input, proof));
+    }
+    /// @notice SDK-independent exit: no local decryption or encrypted input is
+    /// needed to withdraw the full amount belonging to an unlocked position.
+    function withdrawAll(bytes32 offerId) external { _withdraw(offerId, FHE.asEuint64(type(uint64).max)); }
+    function _withdraw(bytes32 offerId, euint64 requested) private {
         Position storage p = positions[offerId]; require(p.lender == msg.sender, NotLender());
         require(p.loanId == bytes32(0) || _resolutionLoan(p.loanId).settled || resolution[p.loanId] != 0, PositionLocked());
-        euint64 amount = FHE.min(FHE.fromExternal(input, proof), p.available);
+        euint64 amount = FHE.min(requested, p.available);
         FHE.allowTransient(amount, address(token));
         euint64 sent = token.confidentialTransfer(msg.sender, amount);
         p.available = FHE.sub(p.available, sent); _allowPosition(p); emit WithdrawalRequested(offerId);
@@ -61,7 +69,7 @@ contract MatchedLendingPool is TimedCommonCeilingLoanProbe {
         euint64 available = positions[offerForLoan[loanByBorrower[loan.borrower]]].available;
         // The collateral ceiling covers principal PLUS interest. No partial fill
         // and no borrowing from another lender's funds.
-        ebool valid = FHE.and(FHE.le(requested, available), FHE.le(FHE.add(requested, _interest(requested)), loan.capacity));
+        ebool valid = FHE.and(FHE.le(requested, available), FHE.le(requested, maximumPrincipal));
         return FHE.select(valid, requested, FHE.asEuint64(0));
     }
     function _recordBorrow(Loan storage loan, euint64 transferred) internal override {

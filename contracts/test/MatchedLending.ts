@@ -56,7 +56,7 @@ describe('Matched lender accounting (FHEVM mock; collateral eligibility fixture)
   await s.act('borrow',id,30_000n);expect(await s.decrypt((await s.pool.loanState(id)).debt)).to.equal(0);
   await expect(s.withdraw(s.stranger,other,40_000n)).to.be.revertedWithCustomError(s.pool,'NotLender');
   await ethers.provider.send('evm_setNextBlockTimestamp',[s.now+901]);await ethers.provider.send('evm_mine',[]);
-  await s.withdraw(s.other,other,1_000_000n);expect(await s.decrypt((await s.pool.positionState(other)).available,s.other)).to.equal(0);
+  await s.pool.connect(s.other).withdrawAll(other);expect(await s.decrypt((await s.pool.positionState(other)).available,s.other)).to.equal(0);
   await s.pool.requestResolution(id);const h=await s.pool.resolutionHandle(id),proof=await fhevm.publicDecrypt([h]);await s.pool.finalizeResolution(id,true,proof.decryptionProof);
   await s.withdraw(s.lender,empty,1n);
  });

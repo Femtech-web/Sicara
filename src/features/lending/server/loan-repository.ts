@@ -14,7 +14,7 @@ export class LoanRepository {
   constructor(private db: Database) {}
 
   async list(wallet: string) {
-    const result = await this.db.query("SELECT id,state,required_zatoshis::text,created_at,expires_at FROM sicara.loans WHERE wallet=$1 ORDER BY created_at DESC LIMIT 50", [walletAddress(wallet)]);
+    const result = await this.db.query("SELECT id,state,created_at,expires_at FROM sicara.loans WHERE wallet=$1 ORDER BY created_at DESC LIMIT 50", [walletAddress(wallet)]);
     // No custody address or operator observation data in the public read model.
     return result.rows;
   }

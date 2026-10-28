@@ -1,4 +1,4 @@
 export const site = {
   name: "Sicara",
-  description: "Borrow what you need. Keep what you own. Private cross-chain borrowing, starting with Zcash.",
+  description: "Sicara is an experimental testnet lending app for shielded ZEC collateral and confidential token loans, powered by Zcash and Zama.",
 } as const;
