@@ -8,6 +8,7 @@ coverage/
 .DS_Store
 private-notes/
 marketing/
+experiments/
 
 # Self-host Satoshi locally; each checkout downloads its own Fontshare copy.
 src/app/fonts/*.woff2
