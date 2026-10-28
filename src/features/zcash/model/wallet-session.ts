@@ -55,15 +55,19 @@ export class ZcashWalletSession {
     const invalidate = () => { ++this.generation; this.unbind(); this.provider = undefined; this.publish(disconnectedZcash); };
     this.bindings = [['accountsChanged', changed], ['chainChanged', invalidate], ['disconnect', invalidate]];
     for (const [event, listener] of this.bindings) provider.on(event, listener);
+    let timeout: ReturnType<typeof setTimeout> | undefined;
     try {
-      const result = await provider.request({ method: 'zcash_requestAccounts' });
+      const result = await Promise.race([
+        provider.request({ method: 'zcash_requestAccounts' }),
+        new Promise<never>((_, reject) => { timeout = setTimeout(() => reject(new Error('Wallet request timed out')), 60_000); }),
+      ]);
       if (generation !== this.generation || this.provider !== provider) return;
       this.publish({ status: 'connected', address: this.address(result) });
     } catch {
       if (generation !== this.generation) return;
       this.unbind(); this.provider = undefined;
       this.publish({ status: 'disconnected', error: 'Zcash connection was not completed. Approve access in the testnet Noir extension and check that it returns a valid testnet Unified Address.' });
-    }
+    } finally { clearTimeout(timeout); }
   }
   async disconnect() {
     const provider = this.provider; const generation = ++this.generation; this.unbind(); this.provider = undefined; this.publish(disconnectedZcash);

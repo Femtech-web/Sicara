@@ -89,7 +89,7 @@ export function BorrowForm() {
         <button className={primaryButton} type="submit" disabled={isConnected && !wrongNetwork && !canReview}>
           {!isConnected ? <><Wallet size={18} />Connect wallet</> : wrongNetwork ? "Switch to Sepolia" : canReview ? <>Review loan <ArrowRight size={17} /></> : "Enter valid loan amounts"}
         </button>
-        <p id="demo-price" className="px-2 pb-0.5 pt-2 text-center text-[10px] leading-relaxed text-[#858ca0]">Demo prices · Deposits & lending not yet enabled</p>
+        <p id="demo-price" className="px-2 pb-0.5 pt-2 text-center text-[10px] leading-relaxed text-[#858ca0]">Demo prices · ZEC deposits & borrowing not yet enabled</p>
       </form>
       <LoanTerms interestBps={BigInt(interestBps)} interestUnits={loan.ok ? flatInterest(loan.borrowUnits,BigInt(interestBps)) : 0n} borrowAsset={borrowed} open={termsOpen} onOpenChange={setTermsOpen} amount={amount} quote={quote} borrowUnits={loan.ok ? loan.borrowUnits : undefined} />
     </>

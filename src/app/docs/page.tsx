@@ -55,6 +55,7 @@ export default function DocsPage() {
             <div className="mt-7 rounded-2xl border border-[#8798ff]/20 bg-[#8798ff]/5 p-5 text-sm leading-7 text-[#b6bed2]">
               <p className="font-semibold text-[#e0e4ff]">Experimental testnet</p>
               <p className="mt-1">Public ZEC deposits are currently disabled. The private loan signing, release and default flows are still being connected and tested. This guide describes the intended complete flow; an unavailable action in the app is not ready for funds.</p>
+              <p className="mt-3">Verified so far: the original internal custodial pilot completed a real testnet deposit, confidential borrowing, repayment and shielded return. Separately, cUSDC lender supply and withdrawal were confirmed live, and a proof over a real confirmed Zcash note was verified. These checks were performed through internal tools; the complete private borrowing journey is not yet connected or verified in the browser.</p>
             </div>
             <div className="mt-7 grid grid-cols-3 gap-2 text-center text-xs font-semibold text-[#c3cbe0] sm:text-sm">
               {["Lock ZEC", "Borrow tokens", "Repay & recover"].map((step, index) => <div key={step} className="rounded-xl border border-white/8 bg-white/3 px-2 py-4"><span className="mb-2 block text-[10px] text-[#7f8ba7]">0{index + 1}</span>{step}</div>)}

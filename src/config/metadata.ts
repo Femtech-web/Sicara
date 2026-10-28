@@ -18,7 +18,7 @@ export function pageMetadata(path: '/' | '/docs', title: string, description: st
   const { origin } = publicSite();
   const images = [{ url: '/opengraph-image', width: 1200, height: 630, alt: 'Sicara — Keep your ZEC. Borrow privately. Experimental testnet.' }];
   return {
-    title, description,
+    title: { absolute: `${title} — ${site.name}` }, description,
     ...(origin ? { alternates: { canonical: path } } : {}),
     openGraph: { title: `${title} — ${site.name}`, description, siteName: site.name, type: 'website', locale: 'en_US', ...(origin ? { url: path } : {}), images },
     twitter: { card: 'summary_large_image', title: `${title} — ${site.name}`, description, images },
