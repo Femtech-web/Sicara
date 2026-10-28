@@ -4,9 +4,9 @@
 
 Sicara is a lending prototype built for ZECATHON. Borrowers lock shielded ZEC to access confidential tokens on Ethereum Sepolia. Lenders supply those tokens and earn interest from repayments. Zcash protects the ZEC payment layer; Zama powers calculations on encrypted token and loan values. NEAR Intents routing is planned for later.
 
-The original internal, operator-custodied loan completed a real testnet deposit → borrow → repay → shielded return. A separate cUSDC lender market now supports verified live supply and withdrawal. The newer client-held private collateral flow is still being integrated: **public ZEC deposits remain disabled**.
+The original internal, operator-custodied loan completed a real testnet deposit → borrow → repay → shielded return. A separate cUSDC market has now verified live matched borrowing, full repayment and lender interest withdrawal against a freshly funded threshold deposit. Its shielded return is not yet confirmed. The newer client-held private collateral flow is still being integrated: **public ZEC deposits remain disabled**.
 
-[Live app](https://sicara.femdev.site/) · [Watch the demo](https://youtu.be/1XB7PXnJhFU) · [How it works](#the-lending-flow) · [Architecture](#architecture) · [Run locally](#run-locally) · [Verification](#verification) · [Privacy and limits](#privacy-and-trust-boundaries)
+[Live app](https://sicara.femdev.site/) · [Watch the demo](https://youtu.be/wFmd3BxGiTw) · [How it works](#the-lending-flow) · [Architecture](#architecture) · [Run locally](#run-locally) · [Verification](#verification) · [Privacy and limits](#privacy-and-trust-boundaries)
 
 ## Start here
 
@@ -21,9 +21,9 @@ The original internal, operator-custodied loan completed a real testnet deposit 
 | Product interface | Compact Borrow, Lend and Positions views; `/docs` guide; browser-wallet connection; testnet faucets. Browser interaction verification is still pending. |
 | Original loan pilot | Internal testnet ZEC deposit, attested confidential Demo ZAMA borrowing, repayment, and confirmed shielded return completed. Uses operator custody. |
 | cUSDC lender market | Deployed on Sepolia. Small live supply, private balance verification, full unmatched withdrawal and operator-permission revocation completed. |
-| Required lender interest | Encrypted accounting implemented with a 2% flat term rate. Local tests verify repayment allocation and withdrawal of principal plus received interest. Live matched-loan interest delivery is not yet demonstrated. |
+| Required lender interest | 2% flat term rate. A matched cUSDC loan accrued interest, repaid in full, and the lender withdrew principal plus received interest on Sepolia. |
 | Persistent worker | Database-backed allocation, confirmation tracking, refunds and repayment-authorized release; restart and duplicate-send protections tested. This is the original custodial path. |
-| Client-held private collateral | A 5,024-byte proof over a real confirmed testnet note was independently verified, including rejection of a substituted root. Threshold signing and restart protections pass locally. The complete funded release/default/recovery runner remains unfinished. |
+| Client-held private collateral | Real-note proof verified; fresh threshold deposit confirmed; signed timelocked default prepared; matched cUSDC borrowing, repayment and settlement verified. Shielded return and funded default/recovery remain unfinished. Roles still share one host and one approved test source. |
 | Public ZEC deposits | Disabled until the private signing, chain-state and recovery gates pass. |
 | NEAR and vaults | Optional later work: asset routing through NEAR Intents and reinvestment of realized lender earnings. Locked borrower ZEC stays separate. |
 
@@ -139,6 +139,8 @@ sequenceDiagram
 
 ## Privacy and trust boundaries
 
+See the [threat model](THREAT-MODEL.md) for who can learn what, signing and attestation assumptions, and remaining public-use gates.
+
 | Layer | What it protects | What it does not establish |
 | --- | --- | --- |
 | Shielded Zcash payments | Payment details are hidden from public chain observers within the supported shielded pool. | A recipient with viewing authority can recognize and read received payments. Shielding alone does not lock collateral. |
@@ -187,15 +189,19 @@ The market has fixed deployment-wide repayment and settlement cutoffs. Its UI re
 | Confidential borrowing | [Sepolia borrow](https://sepolia.etherscan.io/tx/0xb5bd7b116f3e5c44a7edf0861b3f1d119f84f1525e38310dc0fb57312f6707d3) | Original internal Demo ZAMA custodial pilot. |
 | Repayment | [Sepolia repayment](https://sepolia.etherscan.io/tx/0x558e01d7df6b6faf70653e83a5ea6f5c4455d2a30ee493697246d7d27abec05f) | Same pilot; settlement and recipient return were verified in local evidence. |
 | Shielded return | Zcash testnet transaction `a481e0eda19aaddb9ff1b6f83bf99a34647d029feeda0ca5e8d1d392b46121fa` | Same pilot; independently checked recipient receipt with 18 confirmations. Completes the original custodial loop. |
+| Threshold test deposit | Zcash testnet transaction `2a1ddd1a4df316987108524d7b684e1fe0483858f6716a210dfa0b964bc6b8dd` | Fresh threshold receivers confirmed; real-note default signed with a live maturity. One-host, explicitly trusted single-server test. |
+| Matched cUSDC borrowing | [Confidential draw](https://sepolia.etherscan.io/tx/0x9add18709f398a9b3e6e6c3f688b73f6a29e37cadcd13ba44c1c6e66e833b97a) | New threshold-collateral experiment; private debt verified including interest. |
+| Matched cUSDC repayment | [Full repayment](https://sepolia.etherscan.io/tx/0x2cbfe1e017f88b3452785b38446bbf7c3af1c698599a789035b34dff83851e4b), [KMS settlement](https://sepolia.etherscan.io/tx/0x236a6e994b14784e0be9071397ae2f71e425f18804fdc70750a8d9fe22c88634) | Zero debt verified and settlement finalized. This does not establish a confirmed Zcash return. |
+| Lender principal and interest | [Matched-position withdrawal](https://sepolia.etherscan.io/tx/0xde8d6f985206c0d5fabf4341c7947f5876a7bd122d879151eb09f5ec3dd1416d) | Private earned/available accounting verified before withdrawal; position returned to zero. |
 | Real-note proof | Confirmed note membership at anchor height **4,552,335**; **5,024-byte proof** verified in a separate native process | Ordinary fresh-wallet funding note, using an explicitly trusted single test server. Does not establish a current unspent note, threshold lock or borrowing authorization. |
 | Lender supply | [cUSDC supply](https://sepolia.etherscan.io/tx/0xc3f1b7f6c5040d8ad06a020258e7142c7e9d41ac6ab861c94669d608004f12c8) | Actual unmatched supply; its private position balance was verified. |
 | Lender withdrawal | [Full withdrawal](https://sepolia.etherscan.io/tx/0x5748d6c42aabf29f68e08542ae0093db074fd14bfc77f72aba4dea0b8e03f431) | Position returned to zero; temporary token permission was subsequently revoked. |
 
-Private wallet files and detailed local evidence are intentionally excluded from publication. These receipts do not prove a completed client-held collateral loan, live interest payment or anonymous borrower association.
+Private wallet files and detailed local evidence are intentionally excluded from publication. These receipts do not prove a completed client-held collateral return/default/recovery flow or anonymous borrower association.
 
 ### Frontend scope
 
-The completed custodial loop was exercised through internal scripts and workers, not a complete browser walkthrough. The frontend currently supports loan previews and terms, wallet account connection, faucets, and cUSDC lender supply/private viewing/unmatched withdrawal controls. Borrowing stops at review; the private deposit, authorized borrow, repayment and confirmed collateral-return stages are not connected end to end in the public UI. Browser interaction verification remains pending, including the lender controls. Passing builds and unit tests do not replace that check.
+The completed custodial loop was exercised through internal scripts and workers, not a complete browser walkthrough. The frontend currently supports loan previews and terms, wallet account connection, faucets, and cUSDC lender supply/private viewing/unmatched withdrawal controls. New public borrowing still stops at review. For a wallet with an already approved cUSDC loan, Positions → Borrowed now provides private debt viewing, one-time borrowing, full repayment and KMS settlement controls. These controls pass typecheck/build checks but have not completed browser interaction verification. The private deposit client and confirmed collateral-return stages are not connected end to end in the public UI. Browser interaction verification remains pending, including the lender controls. Passing builds and unit tests do not replace that check.
 
 ## Verification
 
@@ -233,7 +239,7 @@ Routes compose features; feature modules own their domain logic. Shared UI stays
 
 ## Roadmap
 
-Complete and verify the client-held collateral flow, funded release/default/recovery and live matched-loan interest delivery before opening public ZEC deposits. Borrower-to-deposit unlinkability remains separate privacy work.
+Complete and verify the client-held collateral return, funded default/recovery and complete browser/client journey before opening public ZEC deposits. Live matched cUSDC repayment and lender interest withdrawal are verified. Borrower-to-deposit unlinkability remains separate privacy work.
 
 NEAR Intents routing and lender-earnings reinvestment are later extensions. Borrowers’ locked ZEC stays separate from yield strategies.
 

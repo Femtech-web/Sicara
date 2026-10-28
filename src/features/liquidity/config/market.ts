@@ -6,6 +6,12 @@ export const markets:Record<BorrowAssetId,{pool?:Address;token:Address;fromBlock
  'demo-zama':{token:'0x0000000000000000000000000000000000000000',fromBlock:0n},
 };
 export const marketAbi=parseAbi([
+ 'function loanByBorrower(address borrower) view returns (bytes32)',
+ 'function maximumPrincipal() view returns (uint64)',
+ 'function borrow(bytes32 id,bytes32 amount,bytes proof)',
+ 'function repay(bytes32 id,bytes32 amount,bytes proof)',
+ 'function requestSettlement(bytes32 id) returns (bytes32)',
+ 'function finalizeSettlement(bytes32 id,bool repaid,bytes proof)',
  'function commonCeiling() view returns (uint64)',
  'function minimumCollateralZats() view returns (uint64)',
  'function interestBps() view returns (uint16)',
